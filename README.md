@@ -1,52 +1,23 @@
-# VADO — Vibes & Messages
+# VADO frontend
 
-A polished, responsive single-page rebuild of the VADO prototype: dark, glassmorphic, mobile-first, with the glowing VADO emblem, Framer Motion transitions, and fully mocked data (no backend required).
+VADO is a guest-first video discovery and communication frontend built with React, TypeScript, Vite, Tailwind CSS and Lucide icons.
 
-## Stack
-
-- React 18 + TypeScript + Vite
-- Tailwind CSS 3
-- Framer Motion (page transitions, micro-interactions, reduced-motion support)
-- Lucide React icons
-
-## Run
+## Run locally
 
 ```bash
 pnpm install
-pnpm dev        # http://localhost:5173
+pnpm dev
 ```
 
-Build a production bundle:
+Create a production build with `pnpm build`, then preview it with `pnpm preview`.
 
-```bash
-pnpm build      # typecheck + bundle to dist/
-pnpm preview    # serve dist/
-```
+## Current experience
 
-## What's inside
+- Guests land directly on the For You feed and can explore categories.
+- Desktop uses a left navigation rail; mobile uses a five-item bottom bar.
+- Protected destinations offer a local test account. Registration includes Personal, Creator and Business account types, validates form fields, stores a test profile in this browser, and unlocks protected frontend routes.
+- Test accounts are not real VADO accounts. Passwords are checked for form validity but never stored; login still requires a real authentication service.
+- Studio previews a selected MP4/MOV file in the browser and enforces the 50 MB and five-minute limits. It does not upload or publish the file.
+- Inbox, feed, search and account screens do not contain fabricated user or activity records.
 
-| Screen | Notes |
-| --- | --- |
-| Splash | Animated emblem (strokes draw in, halo pulse), auto-advances ~2.2s |
-| Welcome | Floating emblem, staggered entrance, glowing “Get Started” pill |
-| Vibes feed | Following/Global tabs, search filter, cards, error → retry → loading → ready states, “Explore Global” |
-| Studio | Interest chip grid (toggle + persistence), Skip, staggered spring entrance |
-| Chat | Auth screen (validation, password toggle, social buttons, mock sign-in) → chat list → conversation with mock replies |
-| Views | Empty state + mock analytics, CTA back to Global feed |
-| VADO AI | Center button: tap = chat sheet, hold = voice “Listening…” → mock transcript; Esc / swipe-down closes |
-
-- **Desktop (≥700px):** app is centered inside a glowing phone shell.
-- **Mobile:** full-bleed with safe-area padding on the bottom nav.
-- Session + interests persist in `localStorage`; clearing it restarts from the splash.
-- All data is mocked in `src/data/mock.ts`.
-
-## Structure
-
-```
-src/
-  App.tsx              phase/tab state machine, transitions
-  components/          AppShell, VadoEmblem, SplashScreen, WelcomeScreen,
-                       BottomNav, AiSheet, Toast, ConnectionState
-  screens/             VibesFeed, StudioOnboarding, AuthScreen, ChatHome, ViewsScreen
-  data/mock.ts         mock vibes, interests, chats, AI replies
-```
+No backend, database, authentication provider, media service or AI provider is configured. Actions that require those services are presented as unavailable rather than reported as completed. Use the profile's Sign out button to remove the local test profile. Local video previews use a temporary browser object URL and are not persisted.
