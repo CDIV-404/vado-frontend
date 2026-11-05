@@ -1,262 +1,211 @@
-import { ReactNode, useEffect } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ChevronLeft, X } from 'lucide-react';
+"use client";
 
-export function Chip({
-  active,
-  onClick,
-  children,
-  className = '',
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { X, type LucideIcon } from "lucide-react";
+import { avatarGradient } from "@/lib/format";
+
+/* ── Brand ──────────────────────────────────────────────── */
+
+export function LogoMark({ size = 34 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden className="shrink-0">
+      <defs>
+        <linearGradient id="vado-lg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#38C9FF" />
+          <stop offset="0.5" stopColor="#287CFF" />
+          <stop offset="1" stopColor="#8057FF" />
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" rx="17" fill="url(#vado-lg)" />
+      <rect width="64" height="64" rx="17" fill="white" opacity="0.08" />
+      <path d="M19 17l13 30 13-30h-8.4L32 30.5 27.4 17z" fill="white" />
+    </svg>
+  );
+}
+
+export function Logo({ size = 30, word = true }: { size?: number; word?: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-2.5 select-none">
+      <LogoMark size={size} />
+      {word && <span className="font-extrabold tracking-[0.22em] text-vado-text text-lg">VADO</span>}
+    </span>
+  );
+}
+
+/* ── Avatar ─────────────────────────────────────────────── */
+
+export function Avatar({
+  src,
+  name,
+  size = 44,
+  ring = false,
+  className = "",
 }: {
-  active?: boolean;
-  onClick?: () => void;
-  children: ReactNode;
+  src: string | null | undefined;
+  name: string;
+  size?: number;
+  ring?: boolean;
   className?: string;
 }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors ${
-        active
-          ? 'border-beam bg-volt/25 text-white shadow-glow-in'
-          : 'border-[#d8f3ff]/25 bg-glass text-mist hover:border-beam/60 hover:text-ink'
-      } ${className}`}
+  const inner = src ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={name}
+      width={size}
+      height={size}
+      className="rounded-full object-cover"
+      style={{ width: size, height: size }}
+      loading="lazy"
+    />
+  ) : (
+    <span
+      className="rounded-full flex items-center justify-center font-bold text-white"
+      style={{ width: size, height: size, background: avatarGradient(name), fontSize: size * 0.4 }}
     >
-      {children}
-    </button>
+      {(name || "?").replace(/^@/, "").charAt(0).toUpperCase()}
+    </span>
+  );
+  if (!ring) return <span className={`inline-block shrink-0 ${className}`}>{inner}</span>;
+  return (
+    <span className={`inline-block shrink-0 rounded-full ring-grad p-[2.5px] ${className}`}>
+      <span className="block rounded-full p-[2px] bg-vado-bg">{inner}</span>
+    </span>
   );
 }
 
-function useEscape(active: boolean, onClose: () => void) {
-  useEffect(() => {
-    if (!active) return;
-    const fn = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', fn);
-    return () => window.removeEventListener('keydown', fn);
-  }, [active, onClose]);
-}
+/* ── Spinner / empty ────────────────────────────────────── */
 
-export function Sheet({
-  open,
-  onClose,
-  title,
-  children,
-}: {
-  open: boolean;
-  onClose: () => void;
-  title: string;
-  children: ReactNode;
-}) {
-  useEscape(open, onClose);
+export function Spinner({ size = 28 }: { size?: number }) {
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-40 flex flex-col justify-end md:justify-center"
-        >
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-label={title}
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 40, opacity: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="relative mx-2 mb-2 flex max-h-[75%] flex-col overflow-hidden rounded-3xl border border-[#d8f3ff]/35 bg-[#0a1f38]/95 shadow-glow-lg backdrop-blur-2xl md:mx-auto md:mb-0 md:w-full md:max-w-[560px] md:max-h-[70vh]"
-          >
-            <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" aria-hidden="true" />
-            <div className="flex items-center justify-between border-b border-[#d8f3ff]/15 px-4 py-3">
-              <h3 className="text-[15px] font-semibold text-ink">{title}</h3>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Close"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d8f3ff]/20 bg-glass text-mist transition-colors hover:text-ink"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="scroll-slim min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
-
-export function ConfirmModal({
-  open,
-  onClose,
-  onConfirm,
-  title,
-  body,
-  confirmLabel = 'Confirm',
-  danger = false,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  title: string;
-  body: string;
-  confirmLabel?: string;
-  danger?: boolean;
-}) {
-  useEscape(open, onClose);
-  return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[55] flex items-center justify-center p-4"
-          role="alertdialog"
-          aria-modal="true"
-          aria-label={title}
-        >
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-          <motion.div
-            initial={{ scale: 0.94, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.94, opacity: 0 }}
-            transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="relative w-full max-w-sm rounded-3xl border border-[#d8f3ff]/35 bg-[#0a1f38]/95 p-5 shadow-glow-lg backdrop-blur-2xl"
-          >
-            <h3 className="text-[16px] font-semibold text-ink">{title}</h3>
-            <p className="mt-2 text-[13px] leading-relaxed text-mist">{body}</p>
-            <div className="mt-5 flex gap-2.5">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 rounded-full border border-[#d8f3ff]/25 bg-glass px-4 py-2.5 text-[13px] font-medium text-mist transition-colors hover:text-ink"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  onConfirm();
-                  onClose();
-                }}
-                className={`flex-1 rounded-full px-4 py-2.5 text-[13px] font-semibold transition-colors ${
-                  danger
-                    ? 'border border-red-400/60 bg-red-500/20 text-red-200 hover:bg-red-500/30'
-                    : 'border border-[#d8f3ff] bg-volt/25 text-white shadow-glow-in hover:bg-volt/40'
-                }`}
-              >
-                {confirmLabel}
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
-
-export function EmptyState({
-  icon,
-  title,
-  body,
-  action,
-}: {
-  icon: ReactNode;
-  title: string;
-  body: string;
-  action?: ReactNode;
-}) {
-  return (
-    <div className="mx-auto flex w-full max-w-sm flex-col items-center py-14 text-center">
-      <span className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-beam/30 bg-volt/10 text-beam shadow-glow">
-        {icon}
-      </span>
-      <h2 className="text-lg font-semibold text-ink">{title}</h2>
-      <p className="mt-1 text-[13px] leading-relaxed text-mist">{body}</p>
-      {action && <div className="mt-6">{action}</div>}
-    </div>
-  );
-}
-
-export function Skeleton({ className = '' }: { className?: string }) {
-  return (
-    <div
-      aria-hidden="true"
-      className={`animate-pulse rounded-2xl border border-[#d8f3ff]/15 bg-glass/60 ${className}`}
+    <span
+      className="inline-block rounded-full border-2 border-white/15 border-t-vado-cyan animate-spin"
+      style={{ width: size, height: size }}
+      aria-label="Loading"
     />
   );
 }
 
-export function SectionCard({
+export function EmptyState({
+  icon: Icon,
   title,
-  children,
-  className = '',
+  sub,
+  action,
 }: {
-  title?: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <section
-      className={`rounded-3xl border border-[#d8f3ff]/25 bg-glass p-4 backdrop-blur-lg ${className}`}
-    >
-      {title && (
-        <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-beam">{title}</h3>
-      )}
-      {children}
-    </section>
-  );
-}
-
-export function ScreenOverlay({
-  title,
-  onClose,
-  actions,
-  children,
-}: {
+  icon: LucideIcon;
   title: string;
-  onClose: () => void;
-  actions?: ReactNode;
-  children: ReactNode;
+  sub?: string;
+  action?: React.ReactNode;
 }) {
-  const reduce = useReducedMotion();
-  useEscape(true, onClose);
   return (
     <motion.div
-      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 18 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={reduce ? { opacity: 0 } : { opacity: 0, y: 18 }}
-      transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="fixed inset-0 z-40 flex justify-center"
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
+      className="glass rounded-3xl px-8 py-12 flex flex-col items-center text-center gap-3 max-w-md mx-auto"
     >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-      <div className="relative mt-2 flex h-[calc(100%-8px)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-[#d8f3ff]/35 bg-[#0a1f38]/95 shadow-glow-lg backdrop-blur-2xl">
-        <header className="flex shrink-0 items-center gap-2 border-b border-[#d8f3ff]/15 px-3 py-2.5">
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={`Close ${title}`}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#d8f3ff]/25 bg-glass text-mist transition-colors hover:text-ink"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">{title}</h2>
-          {actions}
-        </header>
-        <div className="scroll-slim min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
-      </div>
+      <span className="w-16 h-16 rounded-2xl glass-soft flex items-center justify-center">
+        <Icon size={28} className="text-vado-cyan" />
+      </span>
+      <h3 className="font-bold text-lg text-vado-text">{title}</h3>
+      {sub && <p className="text-sm text-vado-sub leading-relaxed max-w-xs">{sub}</p>}
+      {action && <div className="mt-2">{action}</div>}
     </motion.div>
   );
 }
+
+/* ── Modal ──────────────────────────────────────────────── */
+
+export function Modal({
+  open,
+  onClose,
+  children,
+  title,
+  wide = false,
+}: {
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  title?: string;
+  wide?: boolean;
+}) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+  if (!mounted) return null;
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center p-0 sm:p-6"
+          onClick={onClose}
+        >
+          <div className="absolute inset-0 bg-[#05070f]/70 backdrop-blur-sm" />
+          <motion.div
+            initial={{ opacity: 0, y: 48, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 32, scale: 0.97 }}
+            transition={{ type: "spring", stiffness: 380, damping: 32 }}
+            onClick={(e) => e.stopPropagation()}
+            className={`relative glass-deep rounded-t-3xl sm:rounded-3xl w-full ${wide ? "max-w-2xl" : "max-w-md"} max-h-[88dvh] overflow-y-auto`}
+          >
+            {title !== undefined && (
+              <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-white/10 bg-white/[0.03] backdrop-blur-xl rounded-t-3xl">
+                <h3 className="font-bold text-vado-text">{title}</h3>
+                <button onClick={onClose} className="w-8 h-8 rounded-full glass-soft flex items-center justify-center hover:bg-white/10 transition" aria-label="Close">
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+            <div className="p-5">{children}</div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+}
+
+/* ── Toggle ─────────────────────────────────────────────── */
+
+export function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label?: string }) {
+  return (
+    <button
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      onClick={() => onChange(!on)}
+      className={`relative w-11 h-6.5 rounded-full transition-colors duration-200 shrink-0 ${on ? "bg-gradient-to-r from-vado-blue to-vado-purple" : "bg-white/12"}`}
+      style={{ height: 26 }}
+    >
+      <motion.span
+        layout
+        transition={{ type: "spring", stiffness: 500, damping: 32 }}
+        className="absolute top-[3px] w-5 h-5 rounded-full bg-white shadow-md"
+        style={{ left: on ? 22 : 3 }}
+      />
+    </button>
+  );
+}
+
+export function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
+  return (
+    <label className="block">
+      <span className="block text-xs font-semibold uppercase tracking-wider text-vado-sub mb-1.5">{label}</span>
+      {children}
+      {hint && <span className="block text-[11px] text-vado-sub/70 mt-1">{hint}</span>}
+    </label>
+  );
+}
+
+export const inputCls =
+  "glass-input w-full rounded-xl px-3.5 py-2.5 text-sm text-vado-text placeholder:text-vado-sub/50";
